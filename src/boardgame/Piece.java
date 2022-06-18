@@ -1,6 +1,6 @@
 package boardgame;
 
-public class Piece {
+public abstract class Piece {
 
 	protected Position position;
 	/*
@@ -25,5 +25,26 @@ public class Piece {
 		 */
 	}
 
+	public abstract boolean[][] possibleMoves();
 	
+	public boolean possibleMoves(Position position) {
+		return possibleMoves()[position.getRow()][position.getColumn()];
+		/*Este é um metodo concreto que esta usando um metodo abstrato 
+		 * isso é chamato um rook metodo, pois faz um gancho com a
+		 * subclasse
+		 */
+	}
+	public boolean isThereAnyPossibleMove() {
+		boolean[][] mat = possibleMoves();
+		for(int i =0; i<mat.length; i++) {
+			for(int j=0; j<mat.length; j++) {
+				if(mat[i][j]) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
+	
+	
