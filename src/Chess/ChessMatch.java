@@ -2,6 +2,7 @@ package Chess;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import Chess.pieces.King;
 import Chess.pieces.Rook;
@@ -18,6 +19,7 @@ public class ChessMatch {
 	private Integer turn;
 	private Color currentPlayer;
 	private Board board;
+	private boolean check;
 	
 	private List<Piece> piecesOnTheBoard = new ArrayList<>();
 	private List<Piece> capturedPieces = new ArrayList<>();
@@ -26,6 +28,7 @@ public class ChessMatch {
 		board = new Board(8, 8);
 		turn = 1;
 		currentPlayer = Color.White;
+		check = false;
 		initialSetup();
 	}
 	
@@ -34,6 +37,10 @@ public class ChessMatch {
 	}
 	public Color getCurrentPlayer() {
 		return currentPlayer;
+	}
+	
+	public boolean getCheck() {
+		return check;
 	}
 	
 	public ChessPiece[][] getPieces(){
@@ -61,6 +68,13 @@ public class ChessMatch {
 		validateSourcePosition(source);
 		validateTargetPosition(source, target);
 		Piece capturedPiece = makeMove(source, target);
+		
+		if(testCheck(currentPlayer)) {
+			undoMove(source, target, capturedPiece);
+			throw new ChessException("You can not put yourself in check");
+		}
+		check = (testCheck(opponent(currentPlayer))) ? true : false;
+		
 		nextTurn();
 		return (ChessPiece)capturedPiece;
 	}
@@ -77,6 +91,18 @@ public class ChessMatch {
 		
 		return capturedPiece;
 	}
+	
+	private void undoMove(Position source, Position target, Piece capturedPiece) {
+		Piece p = board.removePiece(target);
+		board.placePiece(p, source);
+		
+		if(capturedPiece != null) {
+			board.placePiece(capturedPiece, target);
+			capturedPieces.remove(capturedPiece);
+			piecesOnTheBoard.add(capturedPiece);
+		}
+	}
+	
 	private void validateSourcePosition(Position position) {
 		if(!board.thereIsAPiece(position)) {
 			throw new ChessException("There is no piece on source position");
@@ -102,7 +128,32 @@ public class ChessMatch {
 		currentPlayer = (currentPlayer == Color.White) ? Color.Black : Color.White;
 	}
 	
+	private Color opponent(Color color) {
+		return (color == Color.White) ? Color.Black : Color.White;
+	}
 	
+	private ChessPiece king(Color color) {
+		List<Piece> list = piecesOnTheBoard.stream().filter(x -> ((ChessPiece)x).getColor() == color).collect(Collectors.toList());
+		for(Piece p : list) {
+			if(p instanceof King) {
+				return (ChessPiece)p;
+			}
+		}
+		throw new IllegalStateException("There is no " + color + " king on the board");
+		//Nao é para ocorrer, se ocorrer significa que o programa n ta funcionando
+	}
+	
+	private boolean testCheck(Color color) {
+		Position kingPosition = king(color).getChessPosition().toPosition();
+		List<Piece> opponentPieces = piecesOnTheBoard.stream().filter(x -> ((ChessPiece)x).getColor() == opponent(color)).collect(Collectors.toList());
+		for(Piece p : opponentPieces) {
+			boolean[][] mat = p.possibleMoves();
+			if(mat[kingPosition.getRow()][kingPosition.getColumn()]) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	private void placeNewPiece(char column, int row, ChessPiece piece) {
 		board.placePiece(piece, new ChessPosition(column, row).toPosition());
@@ -110,12 +161,19 @@ public class ChessMatch {
 	}
 	
 	private void initialSetup() {
-		placeNewPiece('c', 1, new Rook(board, Color.White));
-		placeNewPiece('e', 8, new King(board, Color.Black));
-		placeNewPiece('e', 1, new King(board, Color.White));
-		placeNewPiece('c', 8, new Rook(board, Color.Black));
 		placeNewPiece('d', 8, new King(board, Color.Black));
+		placeNewPiece('e', 8, new Rook(board, Color.Black));
+		placeNewPiece('c', 8, new Rook(board, Color.Black));
+		placeNewPiece('d', 7, new Rook(board, Color.Black));
+		placeNewPiece('e', 7, new Rook(board, Color.Black));
+		placeNewPiece('c', 7, new Rook(board, Color.Black));
+		
 		placeNewPiece('d', 1, new King(board, Color.White));
+		placeNewPiece('c', 1, new Rook(board, Color.White));
+		placeNewPiece('e', 1, new Rook(board, Color.White));
+		placeNewPiece('d', 2, new Rook(board, Color.White));
+		placeNewPiece('c', 2, new Rook(board, Color.White));
+		placeNewPiece('e', 2, new Rook(board, Color.White));
 	}
 	
 }
