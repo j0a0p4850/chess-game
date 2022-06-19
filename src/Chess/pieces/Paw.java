@@ -40,7 +40,7 @@ public class Paw extends ChessPiece {
 		else {
 			if(getColor() == Color.Black) {
 				p.setValues(position.getRow() +1, position.getColumn());
-				if(getBoard().positionExists(p) && !getBoard().thereIsAPiece(p) && getMoveCount() == 0) {
+				if(getBoard().positionExists(p) && !getBoard().thereIsAPiece(p)) {
 					mat[p.getRow()][p.getColumn()] = true;
 				}
 				p.setValues(position.getRow() +2, position.getColumn());
